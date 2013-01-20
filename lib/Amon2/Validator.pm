@@ -5,7 +5,7 @@ use 5.010_000;
 package Amon2::Validator;
 use Carp ();
 use Data::Validator;
-use Plack::Util qw(load_class);
+use Plack::Util ();
 use String::CamelCase qw(decamelize);
 
 use Mouse;
@@ -25,15 +25,15 @@ has message => (
     isa      => 'HashRef',
     required => 1,
 );
-has rule => (
-    is       => 'rw',
-    isa      => 'HashRef',
-    required => 1,
-);
 has namespace => (
     is      => 'ro',
     isa     => 'Str',
     default => 'Amon2::Validator',
+);
+has rule => (
+    is       => 'rw',
+    isa      => 'HashRef',
+    required => 0,
 );
 has data => (
     is       => 'rw',
@@ -41,11 +41,9 @@ has data => (
     required => 0,
     default  => sub { +{} },
 );
-
 has errors => (
     is       => 'rw',
     isa      => 'ArrayRef',
-    required => 0,
     default  => sub { [] },
 );
 has validator => (
@@ -56,16 +54,17 @@ has validator => (
 no Mouse;
 
 sub _initialize {
-    my $self = shift;
+    my ($self, $rule) = @_;
+    $self->rule($rule);
     $self->errors([]);
     $self->data(+{});
     $self;
 }
 
 sub validate {
-    my ($self, $input) = @_;
+    my ($self, $input, $rule) = @_;
 
-    $self->_initialize;
+    $self->_initialize($rule);
 
     my %param;
     my %file;
@@ -80,11 +79,12 @@ sub validate {
     }
 
     # 指定したModuleによるValdiation
+    my $validator = $self->validator;
     my %data   = $self->_parse_input_params(%param);
-    my $result = $self->validator->validate($self->get_rule, %data);
+    my $result = $validator->validate($self->get_rule, %data);
 
-    if (!$self->validator->is_success) {
-        $self->_register_valid_errors($self->validator->errors);
+    if (!$validator->is_success) {
+        $self->_register_valid_errors($validator->errors);
     }
 
     # Plack::Request::Uploadファイルのバリデーション
@@ -132,7 +132,7 @@ sub valid_data {
 
 sub has_error {
     my $self = shift;
-    @{$self->errors} ? 1 : 0;
+    @{$self->errors} > 0 ? 1 : 0;
 }
 
 sub is_success {
@@ -263,7 +263,7 @@ sub _parse_valid_data {
 
 sub _build_validator {
     my $self = shift;
-    my $vclass = load_class($self->module, $self->namespace)
+    my $vclass = Plack::Util::load_class($self->module, $self->namespace)
         or Carp::croak('Cannot load ValidatorClass. module: '.$self->module);
     $vclass->new(%{ $self->opt });
 }

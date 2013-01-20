@@ -16,7 +16,6 @@ sub init {
     my %config = (
         module  => $conf->{module},
         message => $conf->{message},
-        rule    => $conf->{rule},
     );
 
     my $validator = Amon2::Validator->new(%config);
@@ -24,7 +23,7 @@ sub init {
     Amon2::Util::add_method($c, 'validator', sub {
         my ($self, ) = @_;
 
-        my $result = $validator->validate(@_);
+        my $result = $validator->validate($self->req, $conf->{rule}{$self->req->path});
 
         if ($result->is_success) {
             $on_success->($self, $result) if $on_success;
