@@ -52,7 +52,7 @@ sub _with {
     my $self = shift;
     my @roles;
 
-    # XXX: 指定刷る順番で挙動変わるので注意
+    # XXX: 指定する順番で挙動変わるので注意
     push @roles => 'NoThrow'    if $self->no_throw;
     push @roles => 'AllowExtra' if $self->allow_extra;
 

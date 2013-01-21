@@ -269,3 +269,37 @@ sub _build_validator {
 }
 
 1;
+
+__END__
+
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+Amon2::Validator
+
+=head1 SYNOPSIS
+
+=head1 METHODS
+
+=head2 $v->validate(\%param, \%rule) :Amon2::Validator
+
+=head2 $v->is_success :Bool
+
+=head2 $v->valid_data :HashRef
+
+=head2 $v->has_error :Bool
+
+=head2 $v->has_error_by_name($name) :Bool
+
+=head2 $v->is_success :Bool
+
+=head2 $v->get_errors :ArrayRef
+
+=head2 $v->get_error_message($name) :ArrayRef
+
+=head2 $v->set_error($name, $key) :Amon2::Validator
+
+=cut
