@@ -41,6 +41,14 @@ __PACKAGE__->load_plugins(
 
 use Log::Minimal;
 
+get  '/' => sub {
+    my $c = shift;
+    my $data = $c->validator(rule => +{
+            hoo => 'Str',
+            bar => 'Str',
+    })->valid_data;
+    $c->render_json($data);
+};
 get  '/is_success'  => sub { $_[0]->render_json({is_success => $_[0]->validator->is_success}) };
 get  '/failed-case' => sub { $_[0]->render_json($_[0]->validator->valid_data) };
 get  '/errors'      => sub { $_[0]->render_json($_[0]->validator->get_errors) };
@@ -52,6 +60,10 @@ my $app = __PACKAGE__->to_app;
 test_psgi($app, sub {
     my $cb = shift;
 
+    {
+        my $res = $cb->(GET '/?hoo=hello&bar=world');
+        is $res->content => '{"bar":"world","hoo":"hello"}';
+    }
     {
         my $res = $cb->(GET '/is_success');
         is $res->content => '{"is_success":0}';
