@@ -1,10 +1,12 @@
 use strict;
 use warnings;
 use 5.010_000;
+our $VERSION = '0.02';
 
 package Amon2::Validator;
 use Carp ();
 use Data::Validator;
+use JSON::XS;
 use Plack::Util ();
 use String::CamelCase qw(decamelize);
 
@@ -50,6 +52,11 @@ has validator => (
     is         => 'ro',
     lazy_build => 1,
 );
+has json => (
+    is         => 'ro',
+    isa        => 'JSON::XS',
+    lazy_build => 1,
+);
 
 no Mouse;
 
@@ -72,8 +79,9 @@ sub validate {
     if (ref $input eq 'HASH') {
         %param = %$input;
     } elsif ($input->isa('Plack::Request')) {
-        %param = %{ $input->parameters->as_hashref_mixed };
-        %file  = %{ $input->uploads || +{} };
+        my $result = $self->_parse_plack_request($input);
+        %param = %{ $result->{param} };
+        %file  = %{ $result->{file}  };
     } else {
         Carp::croak('Missmatch references, Plack::Request or HashRef');
     }
@@ -237,6 +245,24 @@ sub _push_error {
     push @{ $self->{errors} }, \%error;
 }
 
+sub _parse_plack_request {
+    my ($self, $input) = @_;
+
+    my $param = {};
+    if (($input->content_type || '') eq 'application/json') {
+        $param = $self->json->decode($input->content);
+    } else {
+        $param = $input->parameters->as_hashref_mixed;
+    }
+
+    my $file = $input->uploads || +{};
+
+    return +{
+        param => $param,
+        file  => $file,
+    };
+}
+
 sub _parse_input_params {
     my ($self, %param) = @_;
 
@@ -266,6 +292,11 @@ sub _build_validator {
     my $vclass = Plack::Util::load_class($self->module, $self->namespace)
         or Carp::croak('Cannot load ValidatorClass. module: '.$self->module);
     $vclass->new(%{ $self->opt });
+}
+
+sub _build_json {
+    my $self = shift;
+    JSON::XS->new->utf8;
 }
 
 1;

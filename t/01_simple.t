@@ -35,6 +35,10 @@ __PACKAGE__->load_plugins(
                 huga => 'Str',
                 foo  => 'Str',
             },
+            '/json' => +{
+                huga => 'Str',
+                foo  => 'Str',
+            },
         },
     },
 );
@@ -54,6 +58,7 @@ get  '/failed-case' => sub { $_[0]->render_json($_[0]->validator->valid_data) };
 get  '/errors'      => sub { $_[0]->render_json($_[0]->validator->get_errors) };
 get  '/query-param' => sub { $_[0]->render_json($_[0]->validator->valid_data) };
 post '/query-body'  => sub { $_[0]->render_json($_[0]->validator->valid_data) };
+post '/json'        => sub { $_[0]->render_json($_[0]->validator->valid_data) };
 
 my $app = __PACKAGE__->to_app;
 
@@ -86,6 +91,15 @@ test_psgi($app, sub {
     }
     {
         my $res = $cb->(POST '/query-body', [huga => 'hoge', foo => 'bar', and => 'more']);
+        is $res->content => '{"huga":"hoge","foo":"bar"}';
+    }
+
+    {
+        my $res = $cb->(
+            POST '/json',
+                Content_Type => 'application/json',
+                Content      => '{"foo":"bar", "huga":"hoge"}',
+        );
         is $res->content => '{"huga":"hoge","foo":"bar"}';
     }
 });
