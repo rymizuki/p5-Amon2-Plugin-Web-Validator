@@ -8,9 +8,10 @@ requires 'Amon2';
 requires 'Amon2::Util';
 requires 'Data::Validator';
 requires 'Carp';
-requires 'String::CamelCase';
+requires 'JSON::XS';
 requires 'Mouse';
 requires 'Plack::Util';
+requires 'String::CamelCase';
 
 tests 't/*.t';
 test_requires 'Test::More' => ;
