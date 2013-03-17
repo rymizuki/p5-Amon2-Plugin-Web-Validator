@@ -86,7 +86,7 @@ sub validate {
         Carp::croak('Missmatch references, Plack::Request or HashRef');
     }
 
-    # 指定したModuleによるValdiation
+    # Valdiation specified by Module
     my $validator = $self->validator;
     my %data   = $self->_parse_input_params(%param);
     my $result = $validator->validate($self->get_rule, %data);
@@ -95,7 +95,7 @@ sub validate {
         $self->_register_valid_errors($validator->errors);
     }
 
-    # Plack::Request::Uploadファイルのバリデーション
+    # Plack::Request::Upload file validation
     if (%{ $self->get_rule(for_file => 1) }) {
         $self->_validate_upload_files(%file);
     }
